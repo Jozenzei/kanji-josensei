@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kanji Josensei</title>
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#16223b;--mute:#5d6b86;--acc:#2f5fd0;--ok:#1f8f6b;--bad:#c2415a;--line:#cfd6e3;--cv:#f6f8fb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1424;--card:#1a2440;--ink:#e8ecf5;--mute:#93a0bd;--acc:#7aa2ff;--ok:#4cd3a0;--bad:#ff7a90;--line:#2c3860;--cv:#111a31;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1424;--card:#1a2440;--ink:#e8ecf5;--mute:#93a0bd;--acc:#7aa2ff;--ok:#4cd3a0;--bad:#ff7a90;--line:#2c3860;--cv:#111a31;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Meiryo",system-ui,sans-serif}
+.w{max-width:520px;margin:0 auto;padding:10px 12px 16px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+#hud{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mute)}
+#hud b{color:var(--ink)}
+.hp{color:var(--bad);letter-spacing:2px}
+#pr{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:center;margin-bottom:8px}
+#pr small{display:block;color:var(--mute);font-size:12px}
+#pr b{font-size:28px;font-weight:700}
+.stage{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--cv)}
+canvas{display:block;width:100%;touch-action:manipulation}
+#ov{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:18px;background:color-mix(in srgb,var(--bg) 92%,transparent)}
+h1{margin:0;font-size:34px}
+h2{margin:4px 0 0;font-size:14px;color:var(--mute);font-weight:600}
+p{margin:0;max-width:34ch;color:var(--mute);font-size:14px;line-height:1.5}
+.bt{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;font-weight:600;padding:10px 16px;border-radius:10px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+button.g,#mn{background:var(--card);color:var(--ink);border-color:var(--line)}
+:root:not([data-theme="light"]) button:not(.g):not(#mn){color:#0d1424}
+label{font-size:14px;color:var(--mute)}
+ul{list-style:none;margin:0;padding:0;text-align:left;font-size:14px}
+li{margin:2px 0}
+li span{font-size:24px;margin-right:8px}
+</style>
+</head>
+<body>
+<main class="w">
+<div class="top"><div id="hud"></div><button id="mn" title="Menú" aria-label="Menú">☰</button></div>
+<div id="pr"></div>
+<div class="stage"><canvas id="cv" aria-label="Zona de juego"></canvas><div id="ov"></div></div>
+</main>
+<script>
+const F='"Hiragino Sans","Yu Gothic","Noto Sans JP","Meiryo",sans-serif';
+const K=`一|uno|いち・ひと
+二|dos|に・ふた
+三|tres|さん・み
+四|cuatro|し・よん
+五|cinco|ご・いつ
+六|seis|ろく・む
+七|siete|しち・なな
+八|ocho|はち・や
+九|nueve|きゅう・ここの
+十|diez|じゅう・と
+日|sol, día|にち・ひ
+月|luna, mes|げつ・つき
+火|fuego|か・ひ
+水|agua|すい・みず
+木|árbol|もく・き
+金|oro, dinero|きん・かね
+土|tierra|ど・つち
+人|persona|じん・ひと
+大|grande|だい・おお
+小|pequeño|しょう・ちい
+山|montaña|さん・やま
+川|río|せん・かわ
+上|arriba|じょう・うえ
+下|abajo|か・した
+中|dentro, centro|ちゅう・なか
+左|izquierda|さ・ひだり
+右|derecha|う・みぎ
+百|cien|ひゃく
+千|mil|せん・ち
+万|diez mil|まん
+円|yen|えん
+年|año|ねん・とし
+男|hombre|だん・おとこ
+女|mujer|じょ・おんな
+子|niño|し・こ
+学|estudiar|がく・まな
+先|anterior, primero|せん・さき
+生|vida, nacer|せい・い
+本|libro, origen|ほん・もと
+名|nombre|めい・な
+白|blanco|はく・しろ
+雨|lluvia|う・あめ
+気|ánimo, aire|き・け
+車|coche|しゃ・くるま
+食|comer|しょく・た
+見|ver|けん・み
+行|ir|こう・い
+来|venir|らい・く
+外|fuera|がい・そと
+国|país|こく・くに
+天|cielo|てん
+長|largo|ちょう・なが
+出|salir|しゅつ・で
+時|hora, tiempo|じ・とき
+後|detrás, después|ご・あと
+前|delante, frente|ぜん・まえ
+間|intervalo, entre|かん・あいだ
+東|este|とう・ひがし
+今|ahora|こん・いま
+入|entrar|にゅう・い
+高|alto, caro|こう・たか
+話|hablar|わ・はな
+北|norte|ほく・きた
+午|mediodía|ご
+書|escribir|しょ・か
+半|mitad|はん
+西|oeste|せい・にし
+電|electricidad|でん
+校|escuela|こう
+語|idioma|ご
+聞|oír, preguntar|ぶん・き
+何|qué|か・なに
+南|sur|なん・みなみ
+毎|cada|まい
+母|madre|ぼ・はは
+読|leer|どく・よ
+友|amigo|ゆう・とも
+休|descansar|きゅう・やす
+父|padre|ふ・ちち`.split("\n").map(l=>{const[k,m,r]=l.split("|");return{k,m,r:r.split("・")}});
+const SIM=["日月目白","木本","大天","一二三","十千万","口目","女子","上下","左右","年生","人大","先生","火下","東西南北","前後","父母","出入","読話語書","校学","午千","休木","高長","間聞","売買","借貸","兄弟妹姉","春夏秋冬","朝昼夕夜","新親","研究","作使","口目手足","体休"];
+const K4=`会|reunión, encontrar|かい・あ
+社|empresa, santuario|しゃ・やしろ
+発|partir, emitir|はつ
+者|quien, individuo|しゃ・もの
+地|suelo, región|ち・じ
+業|negocio, oficio|ぎょう
+方|dirección, manera|ほう・かた
+新|nuevo|しん・あたら
+場|lugar|じょう・ば
+員|miembro|いん
+立|estar de pie|りつ・た
+開|abrir|かい・ひら
+手|mano|しゅ・て
+力|fuerza|りょく・ちから
+問|pregunta|もん・と
+代|reemplazar, época|だい・か
+明|claro, brillante|めい・あか
+動|moverse|どう・うご
+京|capital|きょう
+目|ojo|もく・め
+通|pasar, circular|つう・とお
+言|decir|げん・い
+理|razón, lógica|り
+体|cuerpo|たい・からだ
+田|arrozal|でん・た
+主|principal, dueño|しゅ・ぬし
+題|tema, título|だい
+意|intención, sentido|い
+不|no, negación|ふ
+作|hacer, crear|さく・つく
+用|asunto, utilidad|よう・もち
+度|grado, vez|ど・たび
+強|fuerte|きょう・つよ
+公|público|こう
+持|sostener, llevar|じ・も
+野|campo, llanura|や・の
+以|desde, a partir de|い
+思|pensar|し・おも
+家|casa, familia|か・いえ
+世|mundo, sociedad|せ・よ
+多|mucho|た・おお
+正|correcto|せい・ただ
+安|barato, tranquilo|あん・やす
+院|institución|いん
+心|corazón, mente|しん・こころ
+界|límite, ámbito|かい
+教|enseñar|きょう・おし
+文|texto, escrito|ぶん・ふみ
+元|principio, antiguo|げん・もと
+重|pesado, capa|じゅう・おも
+近|cerca|きん・ちか
+考|reflexionar, considerar|こう・かんが
+画|dibujo, imagen|が
+海|mar|かい・うみ
+売|vender|ばい・う
+知|saber|ち・し
+道|camino|どう・みち
+集|reunir|しゅう・あつ
+別|separar, otro|べつ・わか
+物|cosa|ぶつ・もの
+使|usar, emplear|し・つか
+品|artículo, producto|ひん・しな
+計|medir, plan|けい・はか
+死|morir|し
+特|especial|とく
+私|yo, privado|し・わたし
+始|empezar|し・はじ
+朝|mañana|ちょう・あさ
+運|transportar, suerte|うん・はこ
+終|terminar|しゅう・お
+台|plataforma|だい
+広|amplio|こう・ひろ
+住|vivir, residir|じゅう・す
+真|verdad|しん・ま
+有|tener, existir|ゆう・あ
+口|boca|こう・くち
+少|poco|しょう・すく
+町|pueblo, barrio|ちょう・まち
+料|material, tarifa|りょう
+工|artesanía, obra|こう
+建|construir|けん・た
+空|vacío, aire|くう・そら
+急|urgente|きゅう・いそ
+止|detener|し・と
+送|enviar|そう・おく
+切|cortar|せつ・き
+転|girar, rodar|てん・ころ
+研|pulir, investigar|けん
+足|pie, pierna|そく・あし
+究|indagar, agotar|きゅう
+楽|diversión, música|がく・たの
+起|levantarse, despertar|き・お
+着|llegar, vestir|ちゃく・き
+店|tienda|てん・みせ
+病|enfermedad|びょう・やまい
+質|calidad, naturaleza|しつ
+待|esperar|たい・ま
+試|probar, intentar|し・ため
+族|tribu, clan|ぞく
+銀|plata|ぎん
+早|temprano|そう・はや
+映|reflejar, proyectar|えい・うつ
+親|padres, íntimo|しん・おや
+験|examen, verificación|けん
+英|inglés, excelente|えい
+医|medicina|い
+仕|servir, trabajo|し
+去|marcharse, pasado|きょ・さ
+味|sabor|み・あじ
+写|copiar, fotografiar|しゃ・うつ
+字|carácter, letra|じ
+答|respuesta|とう・こた
+夜|noche|や・よる
+音|sonido|おん・おと
+注|verter, atención|ちゅう・そそ
+帰|volver|き・かえ
+古|viejo, antiguo|こ・ふる
+歌|canción, cantar|か・うた
+買|comprar|ばい・か
+悪|malo|あく・わる
+図|plano, diagrama|ず・と
+週|semana|しゅう
+室|habitación|しつ
+歩|caminar|ほ・ある
+風|viento|ふう・かぜ
+紙|papel|し・かみ
+黒|negro|こく・くろ
+花|flor|か・はな
+春|primavera|しゅん・はる
+赤|rojo|せき・あか
+青|azul|せい・あお
+館|edificio público|かん
+屋|local, techo|おく・や
+色|color|しょく・いろ
+走|correr|そう・はし
+秋|otoño|しゅう・あき
+夏|verano|か・なつ
+習|aprender, practicar|しゅう・なら
+駅|estación|えき
+洋|océano, occidente|よう
+旅|viaje|りょ・たび
+服|ropa|ふく
+夕|atardecer|せき・ゆう
+借|pedir prestado|しゃく・か
+曜|día de la semana|よう
+飲|beber|いん・の
+肉|carne|にく
+貸|prestar|たい・か
+堂|templo, sala grande|どう
+鳥|pájaro|ちょう・とり
+飯|comida cocida, arroz|はん・めし
+勉|esforzarse|べん
+冬|invierno|とう・ふゆ
+昼|plena luz del día|ちゅう・ひる
+茶|té|ちゃ
+弟|hermano menor|てい・おとうと
+牛|vaca|ぎゅう・うし
+魚|pez|ぎょ・さかな
+兄|hermano mayor|けい・あに
+犬|perro|けん・いぬ
+妹|hermana menor|まい・いもうと
+姉|hermana mayor|し・あね
+漢|China, Han|かん`.split("\n").map(l=>{const[k,m,r]=l.split("|");return{k,m,r:r.split("・")}});
+const $=s=>document.querySelector(s),cv=$("#cv"),ctx=cv.getContext("2d");
+const sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+let W=360,H=480,P={},G=null,last=0,mode="m",lv=5,practice=false,st={},best=0;
+try{st=JSON.parse(localStorage.getItem("kn5s")||"{}");best=+localStorage.getItem("kn5b")||0}catch(e){}
+const save=()=>{try{localStorage.setItem("kn5s",JSON.stringify(st));localStorage.setItem("kn5b",best)}catch(e){}};
+const rec=(k,ok)=>{const o=st[k]||(st[k]={h:0,m:0});ok?o.h++:o.m++};
+function pal(){const s=getComputedStyle(document.documentElement);for(const k of["card","ink","mute","acc","ok","bad","line","cv"])P[k]=s.getPropertyValue("--"+k).trim()}
+function fit(){const d=devicePixelRatio||1;W=cv.clientWidth||360;H=Math.round(Math.max(340,Math.min(W*1.3,innerHeight-250)));cv.style.height=H+"px";cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+function hud(){$("#hud").innerHTML=G?"<span>Puntos <b>"+G.score+"</b></span><span>Etapa <b>"+G.level+"</b></span><span>Combo <b>"+G.combo+"</b></span><span class=hp>"+(practice?"∞":"♥".repeat(Math.max(0,G.lives)))+"</span>":"<span>Récord <b>"+best+"</b></span>"}
+const lb=n=>'<button data-l="'+n+'"'+(lv===n?'':' class="g"')+'>Kanji N'+n+'</button>';
+const ov=h=>{const o=$("#ov");o.innerHTML=h;o.style.display="flex"};
+function menu(){G=null;hud();$("#pr").innerHTML="<small>Kanji Josensei</small><b>—</b>";
+ov('<h1>Kanji Josensei</h1><p>Dispara al kanji correcto antes de que toque el suelo. Los que fallas vuelven con más frecuencia y los nuevos se van desbloqueando por etapa. En Kanji N4 también aparecen kanji de N5 de vez en cuando.</p><h2>Dificultad</h2><div class="bt">'+lb(5)+lb(4)+'</div><h2>Modo de juego</h2><div class="bt"><button data-m="m">Significado</button><button data-m="r">Lectura</button><button data-m="x">Mixto</button></div><label><input type="checkbox" id="pc"> Modo práctica (sin vidas)</label><p>Toca o haz clic en el kanji, o usa las teclas 1 a 4. Entre más arriba aciertes, más puntos ganas.</p>')}
+function start(){G={score:0,lives:5,level:1,combo:0,n:0,items:[],shots:[],parts:[],pops:[],wait:.4,t:null,lastK:null,miss:{},over:false,msg:null};$("#ov").style.display="none";$("#pr").innerHTML="<small>Prepárate</small><b>…</b>";hud()}
+function pick(pool){const w=pool.map(x=>{const s=st[x.k]||{h:0,m:0};return x.k===G.lastK?0:Math.max(.3,1+2*s.m-.3*s.h)});let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i]}return pool[0]}
+function round(){let pool=K.slice(0,Math.min(K.length,10+G.level*8)),tp=pool;if(lv===4){const p4=K4.slice(0,Math.min(K4.length,10+G.level*8));pool=[...K,...p4];tp=Math.random()<.2?K:p4}const t=pick(tp);G.lastK=t.k;
+const rm=mode==="x"?(Math.random()<.5?"m":"r"):mode,rd=rm==="r"?t.r[Math.random()*t.r.length|0]:null;
+const ok=pool.filter(x=>x!==t&&!(rm==="r"&&x.r.includes(rd))),g=SIM.find(s=>s.includes(t.k))||"";
+const sim=sh(ok.filter(x=>g.includes(x.k))).slice(0,2),ch=[t,...sim,...sh(ok.filter(x=>!sim.includes(x)))].slice(0,4);
+const vy=H/Math.max(3,8.5-.5*(G.level-1)),sl=sh([0,1,2,3]),fs=Math.min(60,W/6.8);
+G.items=ch.map((x,i)=>({x,sl:sl[i],px:W/4*(sl[i]+.5),y:-fs-Math.random()*70,vy:vy*(.9+Math.random()*.2),fs,st:0,a:1}));
+G.t=G.items[0];$("#pr").innerHTML=rm==="m"?"<small>Significado</small><b>"+t.m+"</b>":"<small>Lectura</small><b>"+rd+"</b>"}
+function lose(){G.combo=0;if(!practice&&--G.lives<=0)over()}
+function over(){G.over=true;if(G.score>best)best=G.score;save();
+const l=Object.entries(G.miss).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k])=>{const x=[...K,...K4].find(z=>z.k===k);return"<li><span>"+k+"</span>"+x.m+": "+x.r.join("・")+"</li>"}).join("");
+ov("<h1>Fin de la partida</h1><p><b>"+G.score+"</b> puntos. Récord: "+best+"</p>"+(l?"<h2>Para repasar</h2><ul>"+l+"</ul>":"")+'<div class="bt"><button data-a="again">Jugar de nuevo</button><button data-a="menu" class="g">Menú</button></div>')}
+function boom(it){for(let i=0;i<16;i++){const a=Math.random()*6.3,s=80+Math.random()*160;G.parts.push({x:it.px,y:it.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-60,a:1})}}
+function fire(it){if(!G||G.over||it.st||!G.t||G.t.st)return;G.shots.push({x:it.px,y:it.y,a:1});
+if(it===G.t){it.st=2;G.combo++;G.n++;const pts=Math.round((2+18*Math.max(0,Math.min(1,1-it.y/(H-34))))*(1+(G.combo/4|0)));G.score+=pts;G.pops.push({x:it.px,y:it.y-it.fs,t:"+"+pts,a:1});rec(it.x.k,true);boom(it);G.items.forEach(o=>{if(!o.st)o.st=4});G.wait=.7;if(G.n%8===0){G.level++;G.msg={t:"¡Etapa "+G.level+"!",a:1.6}}}
+else{it.st=1;rec(G.t.x.k,false);G.miss[G.t.x.k]=(G.miss[G.t.x.k]||0)+1;lose()}hud()}
+function hit(x,y){if(!G||G.over)return;let b=null,bd=1e9;for(const it of G.items){if(it.st)continue;const d=Math.hypot(it.px-x,it.y-y);if(d<it.fs*.85&&d<bd){b=it;bd=d}}if(b)fire(b)}
+function missed(){const t=G.t;t.st=3;t.vy=0;t.y=H-34;t.a=1;G.items.forEach(o=>{if(!o.st)o.st=4});rec(t.x.k,false);G.miss[t.x.k]=(G.miss[t.x.k]||0)+1;G.wait=1.4;lose();hud()}
+function upd(dt){
+if(G.wait>0){G.wait-=dt;if(G.wait<=0)round()}
+for(const it of G.items){it.y+=it.vy*dt;const f=it.st===2?3:it.st===3?.6:it.st?1.5:0;it.a-=f*dt}
+G.items=G.items.filter(i=>i.a>0&&i.y<H+80);
+if(G.t&&G.t.st===0&&G.t.y>H-34)missed();
+for(const s of G.shots)s.a-=dt*6;G.shots=G.shots.filter(s=>s.a>0);
+for(const p of G.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=500*dt;p.a-=dt*1.6}G.parts=G.parts.filter(p=>p.a>0);
+for(const p of G.pops){p.y-=40*dt;p.a-=dt*1.2}G.pops=G.pops.filter(p=>p.a>0);
+if(G.msg)G.msg.a-=dt}
+function draw(){ctx.globalAlpha=1;ctx.fillStyle=P.cv;ctx.fillRect(0,0,W,H);
+ctx.strokeStyle=P.acc;ctx.globalAlpha=.35;ctx.setLineDash([6,6]);ctx.beginPath();ctx.moveTo(0,H-34);ctx.lineTo(W,H-34);ctx.stroke();ctx.setLineDash([]);
+if(!G)return;ctx.textAlign="center";ctx.textBaseline="middle";
+for(const s of G.shots){ctx.globalAlpha=Math.max(0,s.a);ctx.strokeStyle=P.acc;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(W/2,H);ctx.lineTo(s.x,s.y);ctx.stroke()}
+for(const it of G.items){const r=it.fs*.78;ctx.globalAlpha=Math.max(0,Math.min(1,it.a));
+ctx.beginPath();ctx.arc(it.px,it.y,r,0,7);ctx.fillStyle=P.card;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=it.st===1?P.bad:it.st===2||it.st===3?P.ok:P.line;ctx.stroke();
+ctx.fillStyle=P.ink;ctx.font=it.fs+"px "+F;ctx.fillText(it.x.k,it.px,it.y+2);
+ctx.font="11px sans-serif";ctx.fillStyle=P.mute;ctx.fillText(it.sl+1,it.px-r*.72,it.y-r*.72);
+if(it.st===2||it.st===3){ctx.font="600 13px "+F;ctx.fillStyle=P.ok;ctx.fillText(it.x.m+": "+it.x.r.join("・"),Math.min(W-70,Math.max(70,it.px)),it.y+r+14)}}
+ctx.fillStyle=P.ok;for(const p of G.parts){ctx.globalAlpha=Math.max(0,p.a);ctx.fillRect(p.x,p.y,5,5)}
+for(const p of G.pops){ctx.globalAlpha=Math.max(0,Math.min(1,p.a));ctx.fillStyle=P.ok;ctx.font="700 18px "+F;ctx.fillText(p.t,p.x,p.y)}
+if(G.msg&&G.msg.a>0){ctx.globalAlpha=Math.min(1,G.msg.a);ctx.fillStyle=P.acc;ctx.font="700 30px "+F;ctx.fillText(G.msg.t,W/2,H/2)}
+ctx.globalAlpha=1}
+function loop(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(G&&!G.over)upd(dt);draw();requestAnimationFrame(loop)}
+cv.addEventListener("pointerdown",e=>{const r=cv.getBoundingClientRect();hit(e.clientX-r.left,e.clientY-r.top)});
+addEventListener("keydown",e=>{if(!G||G.over)return;const n=+e.key;if(n>=1&&n<=4){const it=G.items.find(i=>i.sl===n-1&&!i.st);if(it)fire(it)}});
+$("#ov").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.l){lv=+b.dataset.l;$("#ov").querySelectorAll("[data-l]").forEach(x=>{x.className=+x.dataset.l===lv?"":"g"});return}if(b.dataset.a==="menu")return menu();if(b.dataset.m){mode=b.dataset.m;practice=$("#pc").checked}start()});
+$("#mn").addEventListener("click",menu);
+addEventListener("resize",()=>{fit();pal()});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",pal);
+new MutationObserver(pal).observe(document.documentElement,{attributes:true});
+fit();pal();menu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
